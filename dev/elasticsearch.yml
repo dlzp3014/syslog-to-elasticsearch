@@ -1,0 +1,13 @@
+applications:
+- name: elasticsearch
+  memory: 4g
+  disk_quota: 2g
+  docker:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0
+  health-check-type: http
+  health-check-http-endpoint: /_cluster/health
+  routes:
+  - route: elasticsearch.apps.internal
+  env:
+    ES_JAVA_OPTS: -Xms3g -Xmx3g
+    discovery.type: single-node

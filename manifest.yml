@@ -1,0 +1,6 @@
+applications:
+- name: syslog-to-elasticsearch
+  memory: 768m
+  path: target/syslog-to-elasticsearch-0.0.1-SNAPSHOT.jar
+  env:
+    ELASTICSEARCH_URL: ((elasticsearch_url))

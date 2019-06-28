@@ -1,0 +1,10 @@
+applications:
+- name: kibana
+  memory: 512m
+  disk_quota: 2g
+  docker:
+    image: docker.elastic.co/kibana/kibana:7.2.0
+  health-check-type: http
+  health-check-http-endpoint: /api/status
+  env:
+    ELASTICSEARCH_HOSTS: http://elasticsearch.apps.internal:9200
