@@ -48,11 +48,20 @@ public class ElasticsearchSink {
         this.idGenerator = idGenerator;
     }
 
-    public Mono<Void> handleMesssage(Map<String, Object> payload) {
+    public Mono<Void> handleMessage(Map<String, Object> payload) {
+        if (payload.isEmpty()) {
+            return Mono.empty();
+        }
         final OffsetDateTime dateTime;
         try {
-            dateTime = OffsetDateTime.parse((String) payload.get("syslog_timestamp"));
+            final String syslogTimestamp = (String) payload.get("syslog_timestamp");
+            if (syslogTimestamp == null) {
+                log.info("'syslog_timestamp' field is not found. : payload={}", payload);
+                return Mono.empty();
+            }
+            dateTime = OffsetDateTime.parse(syslogTimestamp);
         } catch (DateTimeParseException e) {
+            log.warn(e.getMessage(), e);
             return Mono.error(e);
         }
         final UUID id = this.idGenerator.generateId();

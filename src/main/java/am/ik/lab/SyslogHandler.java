@@ -29,7 +29,7 @@ public class SyslogHandler
     public Publisher<Void> apply(NettyInbound in, NettyOutbound out) {
         Flux<String> incoming = in.receive().asString();
         incoming.compose(this::parse) //
-            .flatMap(this.sink::handleMesssage) //
+            .flatMap(this.sink::handleMessage) //
             .subscribe();
         return Flux.never();
     }
