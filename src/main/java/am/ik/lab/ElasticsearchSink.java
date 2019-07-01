@@ -66,7 +66,6 @@ public class ElasticsearchSink {
             .bodyToFlux(DataBuffer.class)
             .retryBackoff(10, Duration.ofSeconds(1), Duration.ofMinutes(5))
             .doOnError(e -> log.error(e.getMessage(), e))
-            .log("sink")
             .map(DataBufferUtils::release)
             .then();
     }

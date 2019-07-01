@@ -26,6 +26,8 @@ public class LogParser {
 
     private final Pattern cfHostname = Pattern.compile("([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9\\-_]+)\\.([a-zA-Z0-9\\-_]+)");
 
+    private static final String LINE_BREAK_REPLACEMENT = "@n@";
+
     public LogParser() {
         GrokCompiler grokCompiler = GrokCompiler.newInstance();
         grokCompiler.registerDefaultPatterns();
@@ -56,8 +58,11 @@ public class LogParser {
             if (!springBoot.isEmpty()) {
                 syslog.putAll(springBoot);
                 syslog.put("is_spring_boot", true);
+                String msg = (String) syslog.get("message");
+                if (!StringUtils.isEmpty(msg)) {
+                    syslog.put("message", msg.replace(LINE_BREAK_REPLACEMENT, "\n"));
+                }
             }
-
             final String procId = (String) syslog.get("syslog_procid");
             if (procId != null && procId.contains("RTR")) {
                 final Map<String, Object> goRouter = this.parseGoRouter(message);
@@ -66,6 +71,7 @@ public class LogParser {
                     syslog.put("is_go_router", true);
                 }
             }
+            syslog.put("syslog_message", message.replace(LINE_BREAK_REPLACEMENT, "\n"));
         }
         final String hostname = (String) syslog.get("syslog_hostname");
         if (!StringUtils.isEmpty(hostname)) {

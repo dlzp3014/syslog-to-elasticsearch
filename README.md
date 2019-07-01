@@ -1,6 +1,6 @@
 
 
-## (Optional) Deploy an Elasticsearch on Cloud Foundry
+## (Optional) Deploy Elasticsearch on Cloud Foundry
 
 **Don't use in production!**
 
@@ -16,7 +16,7 @@ cf add-network-policy kibana --destination-app elasticsearch --protocol tcp --po
 cf start kibana
 ```
 
-## Deploy
+## Deploy Syslog-to-Elasticsearch on Cloud Foundry
 
 ```
 ./mvnw clean package
