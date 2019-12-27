@@ -34,7 +34,7 @@ public class SyslogHandler
     @Override
     public Publisher<Void> apply(NettyInbound in, NettyOutbound out) {
         Flux<String> incoming = in.receive().asString();
-        incoming.compose(this::parse) //
+        incoming.transform(this::parse) //
             .flatMap(this.sink::handleMessage) //
             .subscribe();
         return Flux.never();
