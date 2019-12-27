@@ -1,0 +1,9 @@
+applications:
+- name: apm
+  memory: 1g
+  disk_quota: 2g
+  docker:
+    image: docker.elastic.co/apm/apm-server:7.2.0
+  health-check-type: http
+  health-check-http-endpoint: /
+  command: /usr/local/bin/docker-entrypoint -e -E output.elasticsearch.hosts=["elasticsearch.apps.internal:9200"]
