@@ -8,8 +8,10 @@ import reactor.core.publisher.Flux;
 import reactor.netty.NettyInbound;
 import reactor.netty.NettyOutbound;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 @Component
 public class SyslogHandler
@@ -18,6 +20,10 @@ public class SyslogHandler
     private final ElasticsearchSink sink;
 
     private static final Logger err = LoggerFactory.getLogger(SyslogHandler.class);
+
+    private static final String LF = "\n";
+
+    private static final String SPLIT_PATTERN = "(?<=" + LF + ")";
 
     private final LogParser logParser = new LogParser();
 
@@ -36,6 +42,11 @@ public class SyslogHandler
 
     Flux<Map<String, Object>> parse(Flux<String> incoming) {
         return incoming
+            .flatMapIterable(s -> Arrays.asList(s.split(SPLIT_PATTERN))) //
+            .windowUntil(s -> s.endsWith(LF)) //
+            .flatMap(f -> f.collect(Collectors.joining())) //
+            .map(String::trim) //
+            .filter(s -> !s.isEmpty()) //
             .onBackpressureDrop(this::onDropped) //
             .map(logParser::parse);
     }
