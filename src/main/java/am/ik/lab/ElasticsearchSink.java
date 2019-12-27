@@ -1,5 +1,7 @@
 package am.ik.lab;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -29,10 +31,12 @@ public class ElasticsearchSink {
 
     private final IdGenerator idGenerator;
 
+    private final Counter outgoingLogs;
+
     private final Logger log = LoggerFactory.getLogger(ElasticsearchSink.class);
 
     public ElasticsearchSink(WebClient.Builder builder, Elasticsearch elasticsearch,
-                             IdGenerator idGenerator) {
+                             IdGenerator idGenerator, MeterRegistry meterRegistry) {
         this.webClient = builder
             .baseUrl(elasticsearch.getUrl())
             .defaultHeaders(headers -> headers.setBasicAuth(elasticsearch.getUsername(), elasticsearch.getPassword()))
@@ -46,6 +50,7 @@ public class ElasticsearchSink {
                 .wiretap(true)))
             .build();
         this.idGenerator = idGenerator;
+        this.outgoingLogs = meterRegistry.counter("logs.outgoing");
     }
 
     public Mono<Void> handleMessage(Map<String, Object> payload) {
@@ -70,10 +75,11 @@ public class ElasticsearchSink {
         return this.webClient.put()
             .uri(index + "/doc/{id}", id)
             .contentType(MediaType.APPLICATION_JSON)
-            .syncBody(payload)
+            .bodyValue(payload)
             .retrieve()
             .bodyToFlux(DataBuffer.class)
             .retryBackoff(10, Duration.ofSeconds(1), Duration.ofMinutes(5))
+            .doOnNext(__ -> this.outgoingLogs.increment())
             .doOnError(e -> log.error(e.getMessage(), e))
             .map(DataBufferUtils::release)
             .then();

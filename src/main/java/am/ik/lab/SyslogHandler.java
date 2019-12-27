@@ -1,5 +1,7 @@
 package am.ik.lab;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,10 @@ public class SyslogHandler
 
     private final ElasticsearchSink sink;
 
+    private final Counter incomingPayloads;
+
+    private final Counter incomingLogs;
+
     private static final Logger err = LoggerFactory.getLogger(SyslogHandler.class);
 
     private static final String LF = "\n";
@@ -27,14 +33,19 @@ public class SyslogHandler
 
     private final LogParser logParser = new LogParser();
 
-    public SyslogHandler(ElasticsearchSink sink) {
+    public SyslogHandler(ElasticsearchSink sink, MeterRegistry meterRegistry) {
         this.sink = sink;
+        this.incomingPayloads = meterRegistry.counter("payloads.incoming");
+        this.incomingLogs = meterRegistry.counter("logs.incoming");
     }
 
     @Override
     public Publisher<Void> apply(NettyInbound in, NettyOutbound out) {
         Flux<String> incoming = in.receive().asString();
-        incoming.transform(this::parse) //
+        incoming
+            .doOnNext(__ -> this.incomingPayloads.increment())
+            .transform(this::parse) //
+            .doOnNext(__ -> this.incomingLogs.increment())
             .flatMap(this.sink::handleMessage) //
             .subscribe();
         return Flux.never();
