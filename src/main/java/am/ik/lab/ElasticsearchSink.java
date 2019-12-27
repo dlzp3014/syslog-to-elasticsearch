@@ -33,6 +33,8 @@ public class ElasticsearchSink {
 
     private final Counter outgoingLogs;
 
+    private final String indexPrefix;
+
     private final Logger log = LoggerFactory.getLogger(ElasticsearchSink.class);
 
     public ElasticsearchSink(WebClient.Builder builder, Elasticsearch elasticsearch,
@@ -51,6 +53,7 @@ public class ElasticsearchSink {
             .build();
         this.idGenerator = idGenerator;
         this.outgoingLogs = meterRegistry.counter("logs.outgoing");
+        this.indexPrefix = elasticsearch.getIndexPrefix();
     }
 
     public Mono<Void> handleMessage(Map<String, Object> payload) {
@@ -70,10 +73,10 @@ public class ElasticsearchSink {
             return Mono.error(e);
         }
         final UUID id = this.idGenerator.generateId();
-        String index = "drain-" + dateTime.toLocalDate();
+        String index = this.indexPrefix + "-" + dateTime.toLocalDate();
         // https://stackoverflow.com/a/51321602/5861829
         return this.webClient.put()
-            .uri(index + "/doc/{id}", id)
+            .uri("{index}/doc/{id}", index, id)
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(payload)
             .retrieve()

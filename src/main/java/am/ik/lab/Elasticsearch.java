@@ -13,11 +13,14 @@ public class Elasticsearch {
 
     private final String password;
 
+    private final String indexPrefix;
+
     @ConstructorBinding
-    public Elasticsearch(@DefaultValue("http://localhost:9200") String url, @DefaultValue("") String username, @DefaultValue("") String password) {
+    public Elasticsearch(@DefaultValue("http://localhost:9200") String url, @DefaultValue("") String username, @DefaultValue("") String password, @DefaultValue("drain") String indexPrefix) {
         this.url = url;
         this.username = username;
         this.password = password;
+        this.indexPrefix = indexPrefix;
     }
 
     public String getUrl() {
@@ -30,5 +33,9 @@ public class Elasticsearch {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getIndexPrefix() {
+        return indexPrefix;
     }
 }
